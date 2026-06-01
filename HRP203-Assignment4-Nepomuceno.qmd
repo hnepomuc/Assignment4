@@ -5,72 +5,170 @@ date: "today"
 format: html
 editor: visual
 ---
+
 ## Introduction
-Smoking is the leading preventable cause of cardiovascular disease and leads to 1 in every 4 U.S. deaths from cardiovascular disease. Inflammatory mediators caused by smoking lead to atherosclerosis and downstream elevated risk of coronary artery disease, stroke, peripheral artery disease, and elevated risk of lung and non-pulmonary cancers. This study sought to determine the association between smoking, cardiovascular risk, and health care cost in a simulated patient cohort. The overarching objective of this report is to demonstrate reproducible workflows for a course on methods for reproducible health research. 
 
-##Methods
-The data source was a simulated data set "cohort.csv" (n = 5000).  The dataset contains individual-level information on smoking status, sex, age, cardiac events, and health care costs.  Smoking status, sex, and incidence of cardiac events were recorded as binary variables.  Age was defined as a continuous variable.  Health care cost was defined as a continuous variable in U.S. dollars ($).  
+Smoking is the leading preventable cause of cardiovascular disease and leads to 1 in every 4 U.S. deaths from cardiovascular disease. Inflammatory mediators caused by smoking lead to atherosclerosis and downstream elevated risk of coronary artery disease, stroke, peripheral artery disease, and elevated risk of lung and non-pulmonary cancers. This study sought to determine the association between smoking, cardiovascular risk, and health care cost in a simulated patient cohort. The overarching objective of this report is to demonstrate reproducible workflows for a course on methods for reproducible health research.
 
-The primary outcome of the study was the association between smoking status and cardiac events.  The secondary outcome of the study was the association between cardiac events and health care costs. 
+## Methods
 
-A logistic regression model was used to estimate the association between smoking and cardiac event incidence.  Linear regression was used to estimate the association between cardiac events and health care costs. Both models adjusted for age and sex. A p value of \<0.05 was considered significant. 
+The data source was a simulated data set "cohort.csv" (n = 5000). The dataset contains individual-level information on smoking status, sex, age, cardiac events, and health care costs. Smoking status, sex, and incidence of cardiac events were recorded as binary variables. Age was defined as a continuous variable. Health care cost was defined as a continuous variable in U.S. dollars (\$).
 
-**log(p / (1-p)) = β₀ + β₁(smoke) + β₂(female) + β₃(age)\
-**where p is the probability of cardiovascular disease incidence
+The primary outcome of the study was the association between smoking status and cardiac events. The secondary outcome of the study was the association between cardiac events and health care costs.
 
-$$\text{logit}\bigl(\Pr(\text{cardiac}_i = 1) )= \beta_0 + \beta_1 \,\text{age}_i + \beta_2 \,\text{female}_i + \beta_3 \,\text{smoke}_i.$$
+A logistic regression model was used to estimate the association between smoking and cardiac event incidence.
 
-**E\[cost\] = β₀ + β₁(smoke) + β₂(female) + β₃(age)**
+$$\text{logit}\bigl(\Pr(\text{cardiac}_i = 1) )= \beta_0 + \beta_1 \,\text{age}_i + \beta_2 \,\text{female}_i + \beta_3 \,\text{smoke}_i$$
 
-Reproducibility statement: All results were produced in `r R.version.string` and rendered with Quarto. The simulated data, analytic code, and this rendered document are tracked together in a public GitHub repository, so any reader can reproduce the report end-to-end by cloning the repository and rendering the file. The repository for this report can be found at: https://github.com/hnepomuc/Assignment4.
+Linear regression was used to estimate the association between cardiac events and health care costs.
 
+$$E[cost] = β₀ + β₁(smoke) + β₂(female) + β₃(age)$$ Both models adjusted for age and sex. A p value of \<0.05 was considered significant.
 
-##Results
+Reproducibility statement: All results were produced in `r R.version.string` and rendered with Quarto. The simulated data, analytic code, and this rendered document are tracked together in a public GitHub repository. The report may be reproduced end-to-end by cloning the repository and rendering the file. The repository for this report can be found at: https://github.com/hnepomuc/Assignment4.
 
-Characteristics for the simulated cohort are summarized in Table 1. Of 5,000 individuals, 12.9% of patients were smokers, 57.3% were female, with a mean age of 44.9, cardiac event rate 5.5%, and mean cost per hospitalization of \$9398. 
+## Results
 
-```{r,warning=FALSE}
+Characteristics for the simulated cohort are summarized in Table 1. Of 5,000 individuals, 13% of patients were smokers, 57% were female, with a mean age of 45, cardiac event rate 5.5%, and mean cost per cardiac event of \$9376.
+
+```{r}
 #| echo: false
-> library(gtsummary)
-> library(knitr)
-> library(ggplot2)
-> cohort_data <- read.csv("cohort.csv")
-> tbl_summary_1 <- tbl_summary(cohort_data)
-> View(tbl_summary_1)
+#| output: false
+# Load descriptive statistics summary table library:
+library(gtsummary)
+library(effects)
+library(dplyr)
+library(ggplot2)
+library(pROC)
+```
+
+```{r}
+#| echo: false
+#Read the data
+cohort_data <- read.csv("cohort.csv")
+#Create descriptive statistics summary table
+tbl_summary(cohort_data)
+```
 
 ***Table 1:** Descriptive statistics of the simulated cohort (n = 5,000), including smoking status, cardiac event incidence, healthcare costs, age, and sex.*
 
+Figure 1 shows the relationship between smoking and the odds of having a cardiac event.
 
-
-Table 2 shows the relationship between smoking and the odds of having a cardiac event.  
 ```{r, warning=FALSE}
 #| echo: false
-regression_model <- glm(cardiac ~ age + female + smoke, family = binomial(link = "logit"), data = cohort_data)
+#Figure 1. Relationship Between Smoking and Cardiac Events
+library(ggplot2)
+cardiac_event_rate <- mean(cohort_data$cardiac)
+ 
+ggplot(cohort_data, aes(x = factor(smoke), y = cardiac_event_rate)) +
+  geom_boxplot(fill="red") +
+  labs(x = "Smoking Status (0 = No, 1 = Yes)", y = "Probability of Cardiac Event") +
+  theme_minimal()
+```
 
-***Table 1:** The odds of cardiac event based on smoking status, adjusted for health care costs, age, and sex.* 
+***Figure 1:** The odds of cardiac event based on smoking status.*
 
+Figure 2 shows the relationship between cardiac events and health care costs.
 
-
-Table 2 shows the relationship between cardiac events and health care costs.  
 ```{r, warning=FALSE}
 #| echo: false
-cost_model_adj <- lm(cost ~ cardiac + age + female + smoke, data = df)
-***Table 2:** Health care costs in U.S. dollars based on cardiac event, adjusted for smoking status, age, and sex.* 
+#Figure 2. Relationship Between Cost and Cardiac Events
+library(ggplot2)
+
+ggplot(cohort_data, aes(x = factor(cardiac), y = cost)) +
+  geom_boxplot(fill="red") +
+  labs(x = "Cardiac Event (0 = No, 1 = Yes)", y = "Cost $") +
+  theme_minimal()
+```
+
+***Figure 2:** Health care costs in U.S. dollars based on cardiac event.*
+
+Table 2 shows the adjusted logistic regression for the odds of having a cardiac event. Patients who smoked had a 9.59 increased odds of cardiac events (p\<0.001). Female sex was significantly protective of having a cardiac event (OR=0.077, p\<0.001), while higher age had a slightly increased odds of a cardiac event (OR=1.01, p\<0.031).
+
+```{r}
+#| echo: false
+log_model <- glm(
+  cardiac ~ smoke + female + age,
+  data = cohort_data,
+  family = binomial()
+)
+library(broom)
+library(tidyr)
+log_model_results <- tidy(
+  log_model,
+  exponentiate = TRUE,
+  conf.int = TRUE
+) |>
+  mutate(
+    term = recode(
+      term,
+      "(Intercept)" = "Intercept",
+      "smoke" = "Smoker",
+      "female" = "Female",
+      "age" = "Age"
+    )
+  ) |>
+  select(
+    term,
+    odds_ratio = estimate,
+    conf.low,
+    conf.high,
+    p.value
+  )
+
+library(knitr)
+log_model_results |>
+  kable(
+    digits = 2,
+    caption = "Logistic regression model for cardiac events"
+  )
+```
 
 
-On adjusted logistic regression for the odds of having a cardiac event, patients who smoked had a 9.59 increased odds of cardiac events (p\<0.001). Female sex was significantly protective of having a cardiac event (OR=0.07, p\<0.001), while higher age had a slightly increased odds of a cardiac event (OR=1.01, p\<0.031).
+Adjusted linear regression analysis to assess associations with health care costs was performed with results displayed in Table 3. Findings demonstrated that each cardiac event was associated with \$519.97 higher health care costs (p\<0.001). Each additional year of age was associated with \$16.76 higher health care costs (p\<0.001). Smoking status resulted in \$510.87 higher hospital costs (p\<0.001). Female sex was again protective, associated with an average health care savings of \$271.15.
+
+```{r}
+#| echo: false
+cost_model <- lm(
+  cost ~ smoke + female + age + cardiac,
+  data = cohort_data
+)
+
+cost_model_results <- tidy(
+  cost_model,
+  conf.int = TRUE
+) |>
+  mutate(
+    term = recode(
+      term,
+      "(Intercept)" = "Intercept",
+      "smoke" = "Smoker",
+      "female" = "Female",
+      "age" = "Age",
+      "cardiac" = "Cardiac event"
+    )
+  ) |>
+  select(
+    term,
+    estimate,
+    conf.low,
+    conf.high,
+    p.value
+  )
+
+cost_model_results |>
+  kable(
+    digits = 2,
+    caption = "Linear regression model for health care costs"
+  )
+```
 
 
-Adjusted linear regression analysis to assess associations with hospital costs showed that having a cardiac event was associated with \$519.97 higher hospital costs (p\<0.001). Each additional year of age was associated with \$16.76 higher hospital costs (p\<0.001). Patients who smoker had \$510.87 higher hospital costs (p\<0.001). Being female, however, was associated with a savings of \$271.15 per admission, on average.  
+## Discussion
 
+In this simulated cohort, there was a significant positive association between smoking and our primary and secondary outcomes. Smoking status was associated with a higher incidence of cardiac events and higher health care costs, and this difference persisted after adjustment for age, sex, and smoking status. Additional findings included that female sex was associated with lower cost, and there was a statistically significant increase in cost for every 1-year increase in age.
 
-##Discussion
-In this simulated cohort, there was a significant positive association between smoking and our primary and secondary outcomes.  Smoking status was associated with a higher incidence of cardiac events and higher health care costs, and this difference persisted after
-adjustment for age, sex, and smoking status. Female sex was associated with lower cost, and there was a
-statistically significant increase in cost for every 1-year increase in age.
-
-These results are limited by the simulated data set, which limits its external validity. This analysis is intended as an exercise in reproducible statistical reporting and is not intended to provide real-world evidence. 
+These results are limited by the simulated data set, which limits its external validity. This analysis is intended as an exercise in reproducible statistical reporting and is not intended to provide real-world evidence.
 
 ## AI Disclosure
-I did not use generative AI technology (e.g., ChatGPT) to complete any portion of the work.
 
+I did not use generative AI technology (e.g., ChatGPT) to complete any portion of the work.
