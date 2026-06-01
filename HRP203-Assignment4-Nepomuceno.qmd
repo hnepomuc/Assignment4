@@ -32,22 +32,34 @@ Characteristics for the simulated cohort are summarized in Table 1. Of 5,000 ind
 ```{r,warning=FALSE}
 #| echo: false
 > library(gtsummary)
+> library(knitr)
+> library(ggplot2)
+> cohort_data <- read.csv("cohort.csv")
 > tbl_summary_1 <- tbl_summary(cohort_data)
 > View(tbl_summary_1)
 
-***Table 1:** Descriptive statistics of the simulated cohort (n = 5,000), including smoking status, cardiovascular disease incidence, healthcare costs, age, and sex.*
+***Table 1:** Descriptive statistics of the simulated cohort (n = 5,000), including smoking status, cardiac event incidence, healthcare costs, age, and sex.*
 
-```{r}
+
+
+Table 2 shows the relationship between smoking and the odds of having a cardiac event.  
+```{r, warning=FALSE}
 #| echo: false
-regression_model <- glm(cardiac ~ age + female + smoke, family = binomial(link = "logit"), data = df)
-OR <- exp(coef(regression_model))
+regression_model <- glm(cardiac ~ age + female + smoke, family = binomial(link = "logit"), data = cohort_data)
+
+***Table 1:** The odds of cardiac event based on smoking status, adjusted for health care costs, age, and sex.* 
+
+
+
+Table 2 shows the relationship between cardiac events and health care costs.  
+```{r, warning=FALSE}
+#| echo: false
 cost_model_adj <- lm(cost ~ cardiac + age + female + smoke, data = df)
-```
+***Table 2:** Health care costs in U.S. dollars based on cardiac event, adjusted for smoking status, age, and sex.* 
 
-On adjusted logistic regression for the odds of having a cardiac event, patients who smoked had a 9.59 increased odds of cardiac events (p\<0.001). Being female was strongly protective of having a cardiac event (OR=0.07, p\<0.001), while age increased odds of cardiac events slightly (OR=1.01, p\<0.031).
 
-```{r}
-#| echo: false
+On adjusted logistic regression for the odds of having a cardiac event, patients who smoked had a 9.59 increased odds of cardiac events (p\<0.001). Female sex was significantly protective of having a cardiac event (OR=0.07, p\<0.001), while higher age had a slightly increased odds of a cardiac event (OR=1.01, p\<0.031).
+
 
 Adjusted linear regression analysis to assess associations with hospital costs showed that having a cardiac event was associated with \$519.97 higher hospital costs (p\<0.001). Each additional year of age was associated with \$16.76 higher hospital costs (p\<0.001). Patients who smoker had \$510.87 higher hospital costs (p\<0.001). Being female, however, was associated with a savings of \$271.15 per admission, on average.  
 
